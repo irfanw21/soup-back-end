@@ -1,0 +1,6 @@
+@soup_back_end_HostAddress = http://localhost:5068
+
+GET {{soup_back_end_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
