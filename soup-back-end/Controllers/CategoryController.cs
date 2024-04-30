@@ -4,6 +4,7 @@ using soup_back_end.DTOs.Category;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using static System.Reflection.Metadata.BlobBuilder;
+using Microsoft.AspNetCore.Authorization;
 
 namespace soup_back_end.Controllers
 {
@@ -19,6 +20,7 @@ namespace soup_back_end.Controllers
         }
 
         [HttpGet("GetAll")]
+        [Authorize]
         public IActionResult GetAll()
         {
             try
@@ -33,6 +35,7 @@ namespace soup_back_end.Controllers
         }
 
         [HttpGet("GetById")]
+        [Authorize]
         public IActionResult GetById(string category_id)
         {
             Category? category = _categoryData.GetById(category_id);
@@ -46,6 +49,7 @@ namespace soup_back_end.Controllers
         }
 
         [HttpGet("GetByName")]
+        [Authorize]
         public IActionResult GetByName(string category_Name)
         {
             Category? category = _categoryData.GetByName(category_Name);
