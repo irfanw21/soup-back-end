@@ -10,6 +10,7 @@ using System.IdentityModel.Tokens.Jwt;
 using soup_back_end.DTOs.Email;
 using Microsoft.AspNetCore.WebUtilities;
 using Org.BouncyCastle.Crypto.Generators;
+using Microsoft.AspNetCore.Authorization;
 
 namespace soup_back_end.Controllers
 {
@@ -27,6 +28,35 @@ namespace soup_back_end.Controllers
             _configuration = configuration;
             _mail = mail;
         }
+
+        [HttpGet("GetAll")]
+        public IActionResult GetAll()
+        {
+            try
+            {
+                List<User> users = _userData.GetAll();
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+        [HttpGet("GetById")]
+        public IActionResult Get(Guid id)
+
+        {
+            User? user = _userData.GetById(id);
+
+            if (user == null)
+            {
+                return NotFound("Data Not Found");
+            }
+
+            return Ok(user);
+        }
+
 
         [HttpPost("CreateUser")]
         public async Task<IActionResult> CreateUser([FromBody] UserDTO userDto)
@@ -189,7 +219,7 @@ namespace soup_back_end.Controllers
                         {"email", email }
                     };
 
-            string callbackUrl = QueryHelpers.AddQueryString("http://localhost:5173/ResetPassword", param);
+            string callbackUrl = QueryHelpers.AddQueryString("http://localhost:5173/resetpassword-emailreset", param);
 
             string body = "Please reset your password by clicking <a href=\"" + callbackUrl + "\">here</a>";
 

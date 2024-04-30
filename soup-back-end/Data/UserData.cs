@@ -103,6 +103,93 @@ namespace soup_back_end.Data
         //}
 
         // multiple sql command (with transaction)
+
+        //SelectAll
+        public List<User> GetAll()
+        {
+            List<User> users = new List<User>();
+            string query = "SELECT Id, Username, Email, PASSWORD FROM users";
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    try
+                    {
+                        connection.Open();
+
+                        using (MySqlDataReader reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                users.Add(new User
+                                {
+                                    Id = Guid.Parse(reader["id"].ToString() ?? string.Empty),
+                                    Username = reader["username"].ToString() ?? string.Empty,
+                                    Email = reader["email"].ToString() ?? string.Empty,
+                                    Password = reader["password"].ToString() ?? string.Empty,
+                                    // ada error pada is activated ketika active tidak seharusnya true tetapi ini false
+                                });
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        throw;
+                    }
+                    finally
+                    {
+                        connection.Close();
+                    }
+                }
+
+            }
+
+            return users;
+
+        }
+
+        public User? GetById(Guid id)
+        {
+            User? user = null;
+
+
+            string query = $"SELECT * FROM users WHERE Id = @id";
+
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+
+                    command.Parameters.Clear();
+                    command.Parameters.AddWithValue("@id", id);
+
+                    connection.Open();
+
+
+                    using (MySqlDataReader reader = command.ExecuteReader())
+
+                    {
+                        while (reader.Read())
+                        {
+                            user = new User
+                            {
+                                Id = Guid.Parse(reader["id"].ToString() ?? string.Empty),
+                                Username = reader["email"].ToString() ?? string.Empty,
+                                Email = reader["email"].ToString() ?? string.Empty,
+                                Password = reader["password"].ToString() ?? string.Empty,
+
+                            };
+                        }
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return user;
+        }
+
         public bool CreateUserAccount(User user, UserRole userRole)
         {
             bool result = false;
