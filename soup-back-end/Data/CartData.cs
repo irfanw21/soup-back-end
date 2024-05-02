@@ -158,9 +158,9 @@ namespace soup_back_end.Data
                     command.CommandText = query;
 
                     command.Parameters.AddWithValue("@cartId", cart.cartId);
-                    command.Parameters.AddWithValue("@coursetId", cart.courseId);
+                    command.Parameters.AddWithValue("@courseId", cart.courseId);
                     command.Parameters.AddWithValue("@categoryId", cart.categoryId);
-                    command.Parameters.AddWithValue("@usertId", cart.userId);
+                    command.Parameters.AddWithValue("@userId", cart.userId);
                     command.Parameters.AddWithValue("@scheduleId", cart.scheduleId);
 
                     connection.Open();

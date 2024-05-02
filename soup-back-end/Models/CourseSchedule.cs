@@ -3,7 +3,7 @@
     public class CourseSchedule
     {
         public string scheduleId { get; set; } = string.Empty;
-        public DateTime scheduleDate { get; set; }
+        public DateTime? scheduleDate { get; set; }
         public string courseId { get; set; } = string.Empty;
     }
 }
