@@ -49,14 +49,14 @@ namespace soup_back_end.Controllers
         [HttpGet("GetByCategoryId")]
         public IActionResult GetByCategoryId(string categoryId)
         {
-            Course? course = _courseData.GetByCategoryId(categoryId);
+            List<Course> courses = _courseData.GetByCategoryId(categoryId);
 
-            if (course == null)
+            if (courses == null)
             {
                 return NotFound("Data Not Found");
             }
 
-            return Ok(course);
+            return Ok(courses);
         }
 
         [HttpGet("GetByCourse")]

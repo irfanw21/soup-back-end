@@ -62,6 +62,20 @@ namespace soup_back_end.Controllers
             return Ok(category);
         }
 
+        [HttpGet("GetCourseByCategoryId")]
+        [Authorize]
+        public IActionResult GetCourseByCategoryId(string categoryId)
+        {
+            Course? course = _categoryData.GetCourseByCategoryId(categoryId);
+
+            if (course == null)
+            {
+                return NotFound("Data Not Found");
+            }
+
+            return Ok(course);
+        }
+
         [HttpPost]
         public IActionResult Post([FromBody] CategoryDTO categoryDto)
         {

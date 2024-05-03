@@ -104,48 +104,53 @@ namespace soup_back_end.Data
             return course;
         }
 
-        public Course? GetByCategoryId(string categoryId)
+        public List<Course> GetByCategoryId(string categoryId)
         {
-            Course? course = null;
+            List<Course> courses = new List<Course>();
 
             string query = $"SELECT * FROM course WHERE categoryId = @categoryId";
 
             using (MySqlConnection connection = new MySqlConnection(connectionString))
             {
-
                 using (MySqlCommand command = new MySqlCommand(query, connection))
                 {
-
-                    command.Parameters.Clear();
-                    command.Parameters.AddWithValue("@categoryId", categoryId);
-
-                    connection.Open();
-
-
-                    using (MySqlDataReader reader = command.ExecuteReader())
-
+                    try
                     {
-                        while (reader.Read())
+                        command.Parameters.Clear();
+                        command.Parameters.AddWithValue("@categoryId", categoryId);
+
+                        connection.Open();
+
+                        using (MySqlDataReader reader = command.ExecuteReader())
                         {
-                            course = new Course
+                            while (reader.Read())
                             {
-                                Id = reader["Id"].ToString() ?? string.Empty,
-                                categoryId = reader["categoryId"].ToString() ?? string.Empty,
-                                course_Name = reader["course_Name"].ToString() ?? string.Empty,
-                                Description = reader["Description"].ToString(),
-                                img = reader["img"].ToString() ?? string.Empty,
-                                course_price = Convert.ToInt32(reader["course_price"]),
-                                Created = Convert.ToDateTime(reader["Created"]),
-                                Updated = Convert.ToDateTime(reader["Updated"]),
-                            };
+                                courses.Add(new Course
+                                {
+                                    Id = reader["Id"].ToString() ?? string.Empty,
+                                    categoryId = reader["categoryId"].ToString() ?? string.Empty,
+                                    course_Name = reader["course_Name"].ToString() ?? string.Empty,
+                                    Description = reader["Description"].ToString(),
+                                    img = reader["img"].ToString() ?? string.Empty,
+                                    course_price = Convert.ToInt32(reader["course_price"]),
+                                    Created = Convert.ToDateTime(reader["Created"]),
+                                    Updated = Convert.ToDateTime(reader["Updated"]),
+                                });
+                            }
                         }
                     }
+
+                    catch
+                    {
+                        throw;
+                    }
+                    finally
+                    {
+                        connection.Close();
+                    }
                 }
-
-                connection.Close();
             }
-
-            return course;
+            return courses;
         }
 
         public Course? GetByName(string course_Name)

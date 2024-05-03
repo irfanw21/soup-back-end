@@ -64,7 +64,7 @@ namespace soup_back_end.Data
         {
             Cart? cart = null;
 
-            string query = $"SELECT * FROM users WHERE cartId = @cartid";
+            string query = $"SELECT * FROM cart WHERE cartId = @cartid";
 
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
