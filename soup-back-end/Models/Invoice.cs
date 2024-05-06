@@ -3,9 +3,10 @@
     public class Invoice
     {
         public Guid invoiceId {  get; set; }
-        public Guid cartId { get; set; }
-        public string courseId { get; set; } = string.Empty;
-        public string categoryId { get; set; } = string.Empty;
         public string paymentId { get; set; } = string.Empty;
+        public Guid userId { get; set; } = Guid.Empty;
+        public DateTime invoiceDate { get; set; }
+        public float totalPaid { get; set; }
+        public int itemCount { get; set; }
     }
 }

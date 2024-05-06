@@ -49,6 +49,34 @@ namespace soup_back_end.Controllers
             return Ok(cart);
         }
 
+        [HttpGet("GetItemAmount")]
+        [Authorize]
+        public IActionResult GetItemAmount(Guid userid)
+        {
+            Cart? cart = _cartData.GetByUserId(userid);
+
+            if (cart == null)
+            {
+                return NotFound("Data Not Found");
+            }
+
+            return Ok(cart);
+        }
+
+        [HttpGet("GetTotalPrice")]
+        [Authorize]
+        public IActionResult GetTotalPrice(Guid userid)
+        {
+            Cart? cart = _cartData.GetByUserId(userid);
+
+            if (cart == null)
+            {
+                return NotFound("Data Not Found");
+            }
+
+            return Ok(cart);
+        }
+
         [HttpPost]
         public IActionResult Post([FromBody] CartDTO cartDto)
         {

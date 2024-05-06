@@ -2,6 +2,9 @@
 using MySql.Data.MySqlClient;
 using MimeKit.Encodings;
 using Mysqlx.Crud;
+using System.Security.Cryptography.X509Certificates;
+using Org.BouncyCastle.Security;
+using MySqlX.XDevAPI.Common;
 
 namespace soup_back_end.Data
 {
@@ -16,11 +19,25 @@ namespace soup_back_end.Data
             _connectionString = _configuration.GetConnectionString("DefaultConnection");
         }
 
+        
+
         //getAll
         public List<Cart> GetAll()
         {
             List<Cart> cart = new List<Cart>();
-            string query = $"SELECT\r\n\tcr.cartId,\r\n\tcr.userId,\r\n\tcr.courseId,\r\n\tcr.categoryId,\r\n\tcr.scheduleId,\r\n\tco.course_Name,\r\n\tcs.scheduleDate\r\nFROM cart cr\r\nJOIN course co ON co.Id = cr.courseId\r\nJOIN course_schedule cs ON cs.scheduleId = cr.scheduleId\r\nORDER BY cr.cartId"; 
+            string query = $"SELECT" +
+                $"cr.cartId," +
+                $"cr.UserId," +
+                $"cr.courseId," +
+                $"cr.categoryId," +
+                $"cr.scheduleId," +
+                $"co.course_Name," +
+                $"cs.scheduleDate" +
+                $"FROM cart cr" +
+                $"JOIN course co ON co.Id = cr.courseId" +
+                $"JOIN course_schedule cs ON cs.scheduleId = cr.scheduleId" +
+                $"ORDER BY cr.cartId" +
+                $"WHERE invoiceId = NULL"; 
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
                 using (MySqlCommand command = new MySqlCommand(query, connection))
@@ -38,7 +55,7 @@ namespace soup_back_end.Data
                                         cartId = Guid.Parse(reader["cartId"].ToString() ?? string.Empty),
                                         courseId = reader["courseId"].ToString() ?? string.Empty,
                                         categoryId = reader["categoryId"].ToString() ?? string.Empty,
-                                        userId = Guid.Parse(reader["userId"].ToString() ?? string.Empty),
+                                        userId = Guid.Parse(reader["UserId"].ToString() ?? string.Empty),
                                         scheduleId = reader["scheduleId"].ToString() ?? string.Empty,
                                     });
                                 } 
@@ -88,7 +105,7 @@ namespace soup_back_end.Data
                                 cartId = Guid.Parse(reader["cartId"].ToString() ?? string.Empty),
                                 courseId = reader["courseId"].ToString() ?? string.Empty,
                                 categoryId = reader["categoryId"].ToString() ?? string.Empty,
-                                userId = Guid.Parse(reader["userId"].ToString() ?? string.Empty),
+                                userId = Guid.Parse(reader["UserId"].ToString() ?? string.Empty),
                                 scheduleId = reader["scheduleId"].ToString() ?? string.Empty,
 
                             };
@@ -107,7 +124,7 @@ namespace soup_back_end.Data
         {
             Cart? cart = null;
 
-            string query = $"SELECT * FROM users WHERE userId = @userid";
+            string query = $"SELECT * FROM cart WHERE UserId = @Userid";
 
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
@@ -116,7 +133,7 @@ namespace soup_back_end.Data
                 {
 
                     command.Parameters.Clear();
-                    command.Parameters.AddWithValue("@userid", userid);
+                    command.Parameters.AddWithValue("@UserId", userid);
 
                     connection.Open();
 
@@ -144,11 +161,70 @@ namespace soup_back_end.Data
             return cart;
         }
 
+        public int GetItemAmount(Guid userId)
+        {
+            int itemAmount = 0;
+
+            string query = "SELECT COUNT(*) AS item_amount FROM cart WHERE UserId = @UserId AND invoiceId = NULL";
+
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                using (MySqlCommand command = new MySqlCommand())
+                {
+                    command.Connection = connection;
+                    command.CommandText = query;
+
+                    command.Parameters.AddWithValue("@UserId", userId);
+                    connection.Open();
+
+                    object result = command.ExecuteScalar();
+
+                    if (result != null)
+                    {
+                        itemAmount = Convert.ToInt32(result);
+                    }
+
+                    connection.Close();
+                }
+            }
+
+            return itemAmount;
+        }
+
+        public int GetTotalPrice(Guid userId)
+        {
+            int totalPrice = 0;
+
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                string query = @"
+                SELECT SUM(c.quantity * co.course_price) AS TotalPrice
+                FROM cart c
+                INNER JOIN course co ON c.courseId = co.courseId
+                WHERE c.UserId = @UserId AND c.invoiceId IS NULL";
+
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@UserId", userId);
+                    connection.Open();
+                    object result = command.ExecuteScalar();
+
+                    if (result != null && result != DBNull.Value)
+                    {
+                        totalPrice = Convert.ToInt32(result);
+                    }
+                }
+            }
+
+            return totalPrice;
+        }
+
+
         public bool Insert(Cart cart)
         {
             bool result = false;
 
-            string query = $"INSERT INTO cart(cartId, courseId, categoryId, userId, scheduleId)" + $"VALUES(@cartId, @courseId, @categoryId, @userId, @scheduleId)";
+            string query = $"INSERT INTO cart(cartId, courseId, categoryId, UserId, scheduleId)" + $"VALUES(@cartId, @courseId, @categoryId, @UserId, @scheduleId)";
 
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
@@ -160,7 +236,7 @@ namespace soup_back_end.Data
                     command.Parameters.AddWithValue("@cartId", cart.cartId);
                     command.Parameters.AddWithValue("@courseId", cart.courseId);
                     command.Parameters.AddWithValue("@categoryId", cart.categoryId);
-                    command.Parameters.AddWithValue("@userId", cart.userId);
+                    command.Parameters.AddWithValue("@UserId", cart.userId);
                     command.Parameters.AddWithValue("@scheduleId", cart.scheduleId);
 
                     connection.Open();
@@ -174,6 +250,7 @@ namespace soup_back_end.Data
             return result;
         }
 
+        
         public bool Delete(string cartId)
         {
             bool result = false;
