@@ -49,6 +49,34 @@ namespace soup_back_end.Controllers
             return Ok(cart);
         }
 
+        [HttpGet("GetItemAmount")]
+        [Authorize]
+        public IActionResult GetItemAmount(Guid userid)
+        {
+            Cart? cart = _cartData.GetByUserId(userid);
+
+            if (cart == null)
+            {
+                return NotFound("Data Not Found");
+            }
+
+            return Ok(cart);
+        }
+
+        [HttpGet("GetTotalPrice")]
+        [Authorize]
+        public IActionResult GetTotalPrice(Guid userid)
+        {
+            Cart? cart = _cartData.GetByUserId(userid);
+
+            if (cart == null)
+            {
+                return NotFound("Data Not Found");
+            }
+
+            return Ok(cart);
+        }
+
         [HttpPost]
         public IActionResult Post([FromBody] CartDTO cartDto)
         {
@@ -70,6 +98,35 @@ namespace soup_back_end.Controllers
             if (result)
             {
                 return StatusCode(201, cart.cartId);
+            }
+            else
+            {
+                return StatusCode(500, "error occur");
+            }
+
+        }
+
+        [HttpPut("UpdateIsSelected")]
+        public IActionResult Put(Guid userId,bool isSelected, [FromBody] CartDTO cartDto)
+        {
+
+            if (cartDto == null)
+                return BadRequest("Data Should be Inputed");
+
+            Cart cart = new Cart
+            {
+                courseId = cartDto.courseId,
+                categoryId = cartDto.categoryId,
+                scheduleId = cartDto.scheduleId,
+                userId = cartDto.userId,
+                isSelected = cartDto.isSelected
+            };
+
+            bool result = _cartData.UpdateIsSelected(userId, isSelected);
+
+            if (result)
+            {
+                return NoContent();
             }
             else
             {

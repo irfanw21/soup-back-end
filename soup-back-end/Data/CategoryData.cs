@@ -100,6 +100,7 @@ namespace soup_back_end.Data
             return category;
         }
 
+
         public Category? GetByName(string category_name)
         {
             Category? category = null;
@@ -140,6 +141,48 @@ namespace soup_back_end.Data
             }
 
             return category;
+        }
+
+        public Course? GetCourseByCategoryId(string categoryId)
+        {
+            Course? course = null;
+
+            string query = $"SELECT * FROM course WHERE category_name = @category_name";
+
+            using (MySqlConnection connection = new MySqlConnection(connectionString))
+            {
+
+                using (MySqlCommand command = new MySqlCommand(query, connection))
+                {
+
+                    command.Parameters.Clear();
+                    command.Parameters.AddWithValue("@categoryId", categoryId);
+
+                    connection.Open();
+
+
+                    using (MySqlDataReader reader = command.ExecuteReader())
+
+                    {
+                        while (reader.Read())
+                        {
+                            course = new Course
+                            {
+                                Id = reader["Id"].ToString() ?? string.Empty,
+                                categoryId = reader["categoryId"].ToString() ?? string.Empty,
+                                course_Name = reader["course_Name"].ToString() ?? string.Empty,
+                                Description = reader["Description"].ToString(),
+                                img = reader["img"].ToString() ?? string.Empty,
+                                course_price = Convert.ToInt32(reader["course_price"]),
+                            };
+                        }
+                    }
+                }
+
+                connection.Close();
+            }
+
+            return course;
         }
 
         public bool Insert(Category category)

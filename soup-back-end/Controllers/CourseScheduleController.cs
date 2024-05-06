@@ -18,7 +18,7 @@ namespace soup_back_end.Controllers
             _courseScheduleData = courseScheduleData;
         }
         [HttpGet("GetAll")]
-        [Authorize]
+        
         public IActionResult GetAll()
         {
             try

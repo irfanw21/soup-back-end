@@ -147,7 +147,7 @@ namespace soup_back_end.Data
             return users;
 
         }
-
+        
         public User? GetById(Guid id)
         {
             User? user = null;

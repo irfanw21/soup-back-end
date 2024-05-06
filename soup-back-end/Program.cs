@@ -46,6 +46,8 @@ builder.Services.AddScoped<CategoryData>();
 builder.Services.AddScoped<CourseData>();
 builder.Services.AddScoped<CourseScheduleData>();
 builder.Services.AddScoped<CartData>();
+builder.Services.AddScoped<PaymentMethodsData>();
+builder.Services.AddScoped<InvoiceData>();
 
 builder.Services.AddCors();
 
