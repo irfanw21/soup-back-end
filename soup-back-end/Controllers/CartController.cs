@@ -53,28 +53,28 @@ namespace soup_back_end.Controllers
         [Authorize]
         public IActionResult GetItemAmount(Guid userid)
         {
-            Cart? cart = _cartData.GetByUserId(userid);
+            int itemAmount = _cartData.GetItemAmount(userid);
 
-            if (cart == null)
+            if (itemAmount == 0)
             {
-                return NotFound("Data Not Found");
+                return NotFound("No items found in the cart for the user.");
             }
 
-            return Ok(cart);
+            return Ok(itemAmount);
         }
 
         [HttpGet("GetTotalPrice")]
         [Authorize]
         public IActionResult GetTotalPrice(Guid userid)
         {
-            Cart? cart = _cartData.GetByUserId(userid);
+            int totalPrice = _cartData.GetTotalPrice(userid);
 
-            if (cart == null)
+            if (totalPrice == 0)
             {
-                return NotFound("Data Not Found");
+                return NotFound("No items found in the cart for the user.");
             }
 
-            return Ok(cart);
+            return Ok(totalPrice);
         }
 
         [HttpPost]

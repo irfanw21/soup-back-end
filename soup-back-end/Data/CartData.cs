@@ -19,25 +19,26 @@ namespace soup_back_end.Data
             _connectionString = _configuration.GetConnectionString("DefaultConnection");
         }
 
-        
+
 
         //getAll
         public List<Cart> GetAll()
         {
             List<Cart> cart = new List<Cart>();
-            string query = $"SELECT" +
-                $"cr.cartId," +
-                $"cr.UserId," +
-                $"cr.courseId," +
-                $"cr.categoryId," +
-                $"cr.scheduleId," +
-                $"co.course_Name," +
-                $"cs.scheduleDate" +
-                $"FROM cart cr" +
-                $"JOIN course co ON co.Id = cr.courseId" +
-                $"JOIN course_schedule cs ON cs.scheduleId = cr.scheduleId" +
-                $"ORDER BY cr.cartId" +
-                $"WHERE invoiceId = NULL"; 
+            string query = $"SELECT " +
+                $"cr.cartId, " +
+                $"cr.UserId, " +
+                $"cr.courseId, " +
+                $"cr.categoryId, " +
+                $"cr.scheduleId, " +
+                $"co.course_Name, " +
+                $"cs.scheduleDate " +
+                $"FROM cart cr " +
+                $"JOIN course co ON co.Id = cr.courseId " +
+                $"JOIN course_schedule cs ON cs.scheduleId = cr.scheduleId " +
+                $"WHERE cr.invoiceId IS NULL " +
+                $"ORDER BY cr.cartId";
+
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
                 using (MySqlCommand command = new MySqlCommand(query, connection))
@@ -48,24 +49,23 @@ namespace soup_back_end.Data
 
                         using (MySqlDataReader reader = command.ExecuteReader())
                         {
-                            while (reader.Read()) {
+                            while (reader.Read())
+                            {
+                                cart.Add(new Cart
                                 {
-                                    cart.Add(new Cart
-                                    {
-                                        cartId = Guid.Parse(reader["cartId"].ToString() ?? string.Empty),
-                                        courseId = reader["courseId"].ToString() ?? string.Empty,
-                                        categoryId = reader["categoryId"].ToString() ?? string.Empty,
-                                        userId = Guid.Parse(reader["UserId"].ToString() ?? string.Empty),
-                                        scheduleId = reader["scheduleId"].ToString() ?? string.Empty,
-                                    });
-                                } 
+                                    cartId = Guid.TryParse(reader["cartId"].ToString(), out Guid cartGuid) ? cartGuid : Guid.Empty,
+                                    courseId = reader["courseId"].ToString(),
+                                    categoryId = reader["categoryId"].ToString(),
+                                    userId = Guid.TryParse(reader["UserId"].ToString(), out Guid userGuid) ? userGuid : Guid.Empty,
+                                    scheduleId = reader["scheduleId"].ToString(),
+                                });
                             }
                         }
                     }
-
-                    catch
+                    catch (Exception ex)
                     {
-                        throw;
+                        Console.WriteLine($"An error occurred: {ex.Message}");
+                        throw; // Rethrow the exception to indicate failure
                     }
                     finally
                     {
@@ -124,7 +124,7 @@ namespace soup_back_end.Data
         {
             Cart? cart = null;
 
-            string query = $"SELECT * FROM cart WHERE UserId = @Userid AND invoiceId = NULL";
+            string query = $"SELECT * FROM cart WHERE UserId = @Userid AND invoiceId IS NULL";
 
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
@@ -165,7 +165,7 @@ namespace soup_back_end.Data
         {
             int itemAmount = 0;
 
-            string query = "SELECT COUNT(*) AS item_amount FROM cart WHERE UserId = @UserId AND invoiceId = NULL";
+            string query = "SELECT COUNT(*) AS item_amount FROM cart WHERE UserId = @UserId AND invoiceId IS NULL";
 
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
@@ -197,9 +197,9 @@ namespace soup_back_end.Data
 
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
-                string query = @"SELECT SUM(c.quantity * co.course_price) AS TotalPrice
+                string query = @"SELECT SUM(co.course_price) AS TotalPrice
                 FROM cart c
-                INNER JOIN course co ON c.courseId = co.courseId
+                INNER JOIN course co ON c.courseId = co.Id
                 WHERE c.UserId = @UserId AND c.invoiceId IS NULL";
 
                 using (MySqlCommand command = new MySqlCommand(query, connection))

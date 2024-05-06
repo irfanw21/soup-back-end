@@ -115,8 +115,8 @@ namespace soup_back_end.Data
             int itemCount = _cartData.GetItemAmount(invoice.userId);
             int totalPaid = _cartData.GetTotalPrice(invoice.userId);
             
-            string query = $"INSERT INTO invoice(paymentId, userId, invoiceDate, totalPaid, itemCount)" + $"VALUES(@paymentId, @userId, @invoiceDate, @totalPaid, @itemCount)"
-                 + $"WHERE invoiceId FROM cart = NULL AND isSelected = TRUE" + $"SELECT LAST_INSERT_ID();";
+            string query = $"INSERT INTO invoice(paymentId, userId, invoiceDate, totalPaid, itemCount)" + $"VALUES(@paymentId, @userId, @invoiceDate, @totalPaid, @itemCount) "
+                 + $"WHERE invoiceId FROM cart IS NULL AND isSelected IS TRUE" + $"SELECT LAST_INSERT_ID();";
 
             string invoiceDate = invoice.invoiceDate.Date.ToString("yyyy - MM - dd HH: mm:ss");
 

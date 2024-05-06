@@ -81,7 +81,7 @@ namespace soup_back_end.Data
                     using (MySqlDataReader reader = command.ExecuteReader())
 
                     {
-                        while (reader.Read())
+                        if (reader.Read())
                         {
                             course = new Course
                             {
@@ -125,17 +125,18 @@ namespace soup_back_end.Data
                         {
                             while (reader.Read())
                             {
-                                courses.Add(new Course
+                                Course course = new Course
                                 {
                                     Id = reader["Id"].ToString() ?? string.Empty,
                                     categoryId = reader["categoryId"].ToString() ?? string.Empty,
                                     course_Name = reader["course_Name"].ToString() ?? string.Empty,
                                     Description = reader["Description"].ToString(),
                                     img = reader["img"].ToString() ?? string.Empty,
-                                    course_price = Convert.ToInt32(reader["course_price"]),
+                                    course_price = reader["course_price"] == DBNull.Value ? 0 : Convert.ToInt32(reader["course_price"]),
                                     Created = Convert.ToDateTime(reader["Created"]),
                                     Updated = Convert.ToDateTime(reader["Updated"]),
-                                });
+                                };
+                                courses.Add(course);
                             }
                         }
                     }

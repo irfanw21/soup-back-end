@@ -8,6 +8,6 @@
         public Guid userId { get; set; } = Guid.Empty;
         public string scheduleId {  get; set; } = string.Empty;
         public bool isSelected { get; set; }
-        public  Guid invoiceId { get; set; }
+        public  Guid invoiceId { get; set; } = Guid.Empty;
     }
 }
