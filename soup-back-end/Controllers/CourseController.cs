@@ -132,6 +132,7 @@ namespace soup_back_end.Controllers
             }
 
         }
+
         [HttpDelete]
         public IActionResult Delete(string id)
         {

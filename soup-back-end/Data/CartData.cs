@@ -124,7 +124,7 @@ namespace soup_back_end.Data
         {
             Cart? cart = null;
 
-            string query = $"SELECT * FROM cart WHERE UserId = @Userid";
+            string query = $"SELECT * FROM cart WHERE UserId = @Userid AND invoiceId = NULL";
 
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
@@ -197,8 +197,7 @@ namespace soup_back_end.Data
 
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
-                string query = @"
-                SELECT SUM(c.quantity * co.course_price) AS TotalPrice
+                string query = @"SELECT SUM(c.quantity * co.course_price) AS TotalPrice
                 FROM cart c
                 INNER JOIN course co ON c.courseId = co.courseId
                 WHERE c.UserId = @UserId AND c.invoiceId IS NULL";
@@ -250,7 +249,33 @@ namespace soup_back_end.Data
             return result;
         }
 
-        
+        public bool UpdateIsSelected(Guid userId, bool isSelected)
+        {
+            bool result = false;
+
+            string updateQuery = "UPDATE cart SET isSelected = @isSelected WHERE userId = @userId";
+
+            using (MySqlConnection connection = new MySqlConnection(_connectionString))
+            {
+                using (MySqlCommand command = new MySqlCommand(updateQuery, connection))
+                {
+                    command.Parameters.AddWithValue("@isSelected", isSelected);
+                    command.Parameters.AddWithValue("@userId", userId);
+
+                    connection.Open();
+
+                    int rowsAffected = command.ExecuteNonQuery();
+
+                    result = rowsAffected > 0; // Set result based on update success
+
+                    connection.Close();
+                }
+            }
+
+            return result;
+        }
+
+
         public bool Delete(string cartId)
         {
             bool result = false;

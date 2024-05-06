@@ -116,7 +116,7 @@ namespace soup_back_end.Data
             int totalPaid = _cartData.GetTotalPrice(invoice.userId);
             
             string query = $"INSERT INTO invoice(paymentId, userId, invoiceDate, totalPaid, itemCount)" + $"VALUES(@paymentId, @userId, @invoiceDate, @totalPaid, @itemCount)"
-                 + $"WHERE invoiceId FROM cart = NULL";
+                 + $"WHERE invoiceId FROM cart = NULL AND isSelected = TRUE" + $"SELECT LAST_INSERT_ID();";
 
             string invoiceDate = invoice.invoiceDate.Date.ToString("yyyy - MM - dd HH: mm:ss");
 
@@ -135,7 +135,22 @@ namespace soup_back_end.Data
 
                     connection.Open();
 
-                    result = command.ExecuteNonQuery() > 0 ? true : false;
+                    object updateInvoiceId = command.ExecuteScalar();
+
+                    if (updateInvoiceId != null && updateInvoiceId != DBNull.Value)
+                    {
+                        Guid newInvoiceId = Guid.Parse(updateInvoiceId.ToString());
+
+                        string updateCartQuery = @"UPDATE cart SET invoiceId = @newInvoiceId WHERE userId = @userId AND invoiceId IS NULL";
+
+                        using (MySqlCommand updateCommand = new MySqlCommand(updateCartQuery, connection))
+                        {
+                            updateCommand.Parameters.AddWithValue("@newInvoiceId", newInvoiceId);
+                            updateCommand.Parameters.AddWithValue("@userId", invoice.userId);
+
+                            result = command.ExecuteNonQuery() > 0 ? true : false; 
+                        }
+                    }
 
                     connection.Close();
                 }
