@@ -23,8 +23,9 @@ namespace soup_back_end.Data
         //getAll
         public List<Invoice> GetAll()
         {
-            List<Invoice> invoice = new List<Invoice>();
-            string query = $"SELECT * FROM invoice";
+            List<Invoice> invoices = new List<Invoice>();
+            string query = "SELECT * FROM invoice";
+
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
                 using (MySqlCommand command = new MySqlCommand(query, connection))
@@ -37,32 +38,27 @@ namespace soup_back_end.Data
                         {
                             while (reader.Read())
                             {
+                                invoices.Add(new Invoice
                                 {
-                                    invoice.Add(new Invoice
-                                    {
-                                        invoiceId = Guid.Parse(reader["Id"].ToString() ?? string.Empty),
-                                        paymentId = reader["courseId"].ToString() ?? string.Empty,
-                                        userId = Guid.Parse(reader["categoryId"].ToString() ?? string.Empty),
-                                        invoiceDate = Convert.ToDateTime(reader["invoiceDate"]),
-                                        totalPaid = Convert.ToInt32(reader["course_price"]),
-                                        itemCount = Convert.ToInt16(reader["itemCount"]),
-                                    });
-                                }
+                                    invoiceId = Guid.Parse(reader["invoiceId"].ToString()),
+                                    paymentId = reader["paymentId"].ToString(),
+                                    userId = Guid.Parse(reader["userId"].ToString()),
+                                    invoiceDate = Convert.ToDateTime(reader["invoiceDate"]),
+                                    totalPaid = Convert.ToDecimal(reader["totalPaid"]),
+                                    itemCount = Convert.ToInt32(reader["itemCount"])
+                                });
                             }
                         }
                     }
-
-                    catch
+                    catch (Exception ex)
                     {
-                        throw;
-                    }
-                    finally
-                    {
-                        connection.Close();
+                        Console.WriteLine($"An error occurred: {ex.Message}");
+                        throw; // Rethrow the exception to indicate failure
                     }
                 }
-                return invoice;
             }
+
+            return invoices;
         }
 
         //getByUserId
@@ -112,47 +108,71 @@ namespace soup_back_end.Data
         {
             bool result = false;
 
-            int itemCount = _cartData.GetItemAmount(invoice.userId);
-            int totalPaid = _cartData.GetTotalPrice(invoice.userId);
-            
-            string query = $"INSERT INTO invoice(paymentId, userId, invoiceDate, totalPaid, itemCount)" + $"VALUES(@paymentId, @userId, @invoiceDate, @totalPaid, @itemCount) "
-                 + $"WHERE invoiceId FROM cart IS NULL AND isSelected IS TRUE" + $"SELECT LAST_INSERT_ID();";
+            // Generate a new GUID for invoiceId
+            Guid newInvoiceId = Guid.NewGuid();
 
-            string invoiceDate = invoice.invoiceDate.Date.ToString("yyyy - MM - dd HH: mm:ss");
+            string insertInvoiceQuery = @"
+        INSERT INTO invoice(invoiceId, paymentId, userId, invoiceDate, totalPaid, itemCount)
+        SELECT @invoiceId, @paymentId, @userId, @invoiceDate, SUM(co.course_price), COUNT(*)
+        FROM cart cr
+        INNER JOIN course co ON cr.courseId = co.Id
+        WHERE cr.userId = @userId AND cr.invoiceId IS NULL AND cr.isSelected = 1
+        GROUP BY cr.userId";
+
+            string updateCartQuery = @"
+        UPDATE cart
+        SET invoiceId = @newInvoiceId
+        WHERE userId = @userId AND invoiceId IS NULL AND isSelected = 1";
+
+            string invoiceDate = invoice.invoiceDate.Date.ToString("yyyy-MM-dd HH:mm:ss");
 
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
-                using (MySqlCommand command = new MySqlCommand())
+                connection.Open();
+                using (MySqlTransaction transaction = connection.BeginTransaction())
                 {
-                    command.Connection = connection;
-                    command.CommandText = query;
-
-                    command.Parameters.AddWithValue("@paymentId", invoice.paymentId);
-                    command.Parameters.AddWithValue("@userId", invoice.userId);
-                    command.Parameters.AddWithValue("@invoiceDate", invoice.invoiceDate);
-                    command.Parameters.AddWithValue("@totalPaid", totalPaid);
-                    command.Parameters.AddWithValue("@itemCount", itemCount);
-
-                    connection.Open();
-
-                    object updateInvoiceId = command.ExecuteScalar();
-
-                    if (updateInvoiceId != null && updateInvoiceId != DBNull.Value)
+                    try
                     {
-                        Guid newInvoiceId = Guid.Parse(updateInvoiceId.ToString());
-
-                        string updateCartQuery = @"UPDATE cart SET invoiceId = @newInvoiceId WHERE userId = @userId AND invoiceId IS NULL";
-
-                        using (MySqlCommand updateCommand = new MySqlCommand(updateCartQuery, connection))
+                        // Insert into invoice table
+                        using (MySqlCommand insertCommand = new MySqlCommand(insertInvoiceQuery, connection, transaction))
                         {
-                            updateCommand.Parameters.AddWithValue("@newInvoiceId", newInvoiceId);
-                            updateCommand.Parameters.AddWithValue("@userId", invoice.userId);
+                            insertCommand.Parameters.AddWithValue("@invoiceId", newInvoiceId);
+                            insertCommand.Parameters.AddWithValue("@paymentId", invoice.paymentId);
+                            insertCommand.Parameters.AddWithValue("@userId", invoice.userId);
+                            insertCommand.Parameters.AddWithValue("@invoiceDate", invoiceDate);
 
-                            result = command.ExecuteNonQuery() > 0 ? true : false; 
+                            int rowsAffected = insertCommand.ExecuteNonQuery();
+
+                            if (rowsAffected > 0)
+                            {
+                                // Update cart table with the new invoiceId
+                                using (MySqlCommand updateCommand = new MySqlCommand(updateCartQuery, connection, transaction))
+                                {
+                                    updateCommand.Parameters.AddWithValue("@newInvoiceId", newInvoiceId);
+                                    updateCommand.Parameters.AddWithValue("@userId", invoice.userId);
+
+                                    int updateRows = updateCommand.ExecuteNonQuery();
+
+                                    if (updateRows > 0)
+                                    {
+                                        transaction.Commit();
+                                        result = true;
+                                    }
+                                }
+                            }
                         }
                     }
-
-                    connection.Close();
+                    catch (Exception ex)
+                    {
+                        // Handle exceptions and rollback transaction if necessary
+                        Console.WriteLine($"An error occurred: {ex.Message}");
+                        transaction.Rollback();
+                        throw;
+                    }
+                    finally
+                    {
+                        connection.Close();
+                    }
                 }
             }
 

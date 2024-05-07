@@ -107,7 +107,7 @@ namespace soup_back_end.Controllers
         }
 
         [HttpPut("UpdateIsSelected")]
-        public IActionResult Put(Guid userId,bool isSelected, [FromBody] CartDTO cartDto)
+        public IActionResult Put(Guid cartId,bool isSelected, [FromBody] CartDTO cartDto)
         {
 
             if (cartDto == null)
@@ -115,14 +115,10 @@ namespace soup_back_end.Controllers
 
             Cart cart = new Cart
             {
-                courseId = cartDto.courseId,
-                categoryId = cartDto.categoryId,
-                scheduleId = cartDto.scheduleId,
-                userId = cartDto.userId,
                 isSelected = cartDto.isSelected
             };
 
-            bool result = _cartData.UpdateIsSelected(userId, isSelected);
+            bool result = _cartData.UpdateIsSelected(cartId, isSelected);
 
             if (result)
             {

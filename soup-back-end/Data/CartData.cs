@@ -249,24 +249,24 @@ namespace soup_back_end.Data
             return result;
         }
 
-        public bool UpdateIsSelected(Guid userId, bool isSelected)
+        public bool UpdateIsSelected(Guid cartId, bool isSelected)
         {
             bool result = false;
 
-            string updateQuery = "UPDATE cart SET isSelected = @isSelected WHERE userId = @userId";
+            string updateQuery = "UPDATE cart SET isSelected = @isSelected WHERE cartId = @cartId";
 
             using (MySqlConnection connection = new MySqlConnection(_connectionString))
             {
                 using (MySqlCommand command = new MySqlCommand(updateQuery, connection))
                 {
-                    command.Parameters.AddWithValue("@isSelected", isSelected);
-                    command.Parameters.AddWithValue("@userId", userId);
+                    command.Parameters.AddWithValue("@isSelected", isSelected ? 1 : 0);
+                    command.Parameters.AddWithValue("@cartId", cartId);
 
                     connection.Open();
 
                     int rowsAffected = command.ExecuteNonQuery();
 
-                    result = rowsAffected > 0; // Set result based on update success
+                    result = rowsAffected > 0;
 
                     connection.Close();
                 }
