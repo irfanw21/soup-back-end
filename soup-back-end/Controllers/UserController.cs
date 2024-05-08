@@ -130,8 +130,9 @@ namespace soup_back_end.Controllers
                 _configuration.GetSection("JwtConfig:Key").Value));
 
                 var claims = new Claim[] {
-                    new Claim(ClaimTypes.Name, user.Username),
-                    new Claim(ClaimTypes.Role, userRole.Role)
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Role, userRole.Role),
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
                 };
 
                 var signingCredential = new SigningCredentials(
@@ -140,7 +141,7 @@ namespace soup_back_end.Controllers
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(claims),
-                    Expires = DateTime.UtcNow.AddMinutes(10),
+                    Expires = DateTime.UtcNow.AddDays(1),
                     SigningCredentials = signingCredential
                 };
 
@@ -152,6 +153,24 @@ namespace soup_back_end.Controllers
 
                 return Ok(new LoginResponseDTO { Token = token });
             }
+        }
+
+        [Authorize]
+        [HttpGet("GetUserData")]
+        public IActionResult GetUserData()
+        {
+            var identity = HttpContext.User.Identity as ClaimsIdentity;
+            if (identity != null)
+            {
+                var userClaims = identity.Claims;
+                return Ok(new
+                {
+                    Id = userClaims.FirstOrDefault(o => o.Type == ClaimTypes.NameIdentifier)?.Value,
+                    Role = userClaims.FirstOrDefault(o => o.Type == ClaimTypes.Role)?.Value,
+                    Email = userClaims.FirstOrDefault(o => o.Type == ClaimTypes.Email)?.Value
+                });
+            }
+            return Unauthorized();
         }
 
         [HttpGet("ActivateUser")]
